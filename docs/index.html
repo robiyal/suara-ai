@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suara .ai — Satu nama, satu suara</title>
+<meta name="description" content="Polling on-chain di BNB Chain. Hanya pemegang Agent ID (.ai) yang bisa membuat polling dan memilih — satu nama, satu suara.">
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #171a21;
+    --card-2: #1e222c;
+    --text: #e8eaf0;
+    --muted: #9aa3b2;
+    --line: #2a2f3c;
+    --accent: #f0b90b;
+    --accent-text: #1a1a1a;
+    --green: #2fbf71;
+    --red: #e5484d;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { margin-bottom: 8px; }
+  h1 { font-size: 2rem; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h1 .dot { color: var(--accent); }
+  .tagline { color: var(--muted); margin: 0 0 16px; font-size: 1.05rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .pill.open { color: var(--green); border-color: var(--green); }
+  .pill.closed { color: var(--red); border-color: var(--red); }
+  .pill.holder { color: var(--accent); border-color: var(--accent); }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--card-2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button.vote { width: 100%; text-align: left; margin-top: 6px; }
+  button.vote.voted { border-color: var(--accent); }
+  input, select, textarea {
+    font: inherit;
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 11px;
+    margin-top: 4px;
+  }
+  label { display: block; margin-bottom: 12px; font-size: 0.92rem; }
+  label .hint { color: var(--muted); font-size: 0.82rem; }
+  .opt-row { display: flex; gap: 8px; align-items: center; }
+  .opt-row input { flex: 1; }
+  .opt-row button { padding: 8px 10px; }
+  .bar-wrap { background: var(--bg); border-radius: 6px; height: 8px; overflow: hidden; margin-top: 4px; }
+  .bar { background: var(--accent); height: 100%; width: 0%; }
+  .poll-q { font-size: 1.15rem; font-weight: 650; margin: 0 0 4px; }
+  .poll-meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 10px; }
+  .notice {
+    border: 1px solid var(--accent);
+    background: #2a2305;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .error { color: var(--red); font-size: 0.9rem; margin-top: 8px; }
+  .ok { color: var(--green); font-size: 0.9rem; margin-top: 8px; }
+  footer { color: var(--muted); font-size: 0.85rem; margin-top: 32px; }
+  footer a { color: var(--muted); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; word-break: break-all; }
+  #status { font-size: 0.92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Suara <span class="dot">.ai</span></h1>
+    <p class="tagline">Satu nama, satu suara. Polling on-chain di BNB Chain — hanya pemegang Agent ID yang bisa membuat polling dan memilih.</p>
+  </header>
+
+  <div id="deployNotice" class="notice" hidden>
+    Kontrak belum di-deploy. Halaman ini dalam mode baca saja sampai alamat kontrak diisi.
+    Alamat yang diprediksi: <span class="mono" id="predictedAddr"></span>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="grow" id="status">Memuat jaringan…</div>
+      <button id="connectBtn" type="button">Hubungkan dompet</button>
+    </div>
+    <div class="muted" id="accountLine" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card" id="createCard">
+    <h2 style="margin:0 0 12px;font-size:1.15rem">Buat polling</h2>
+    <form id="createForm">
+      <label>Pertanyaan <span class="hint">(maks 200 karakter)</span>
+        <input id="qInput" type="text" maxlength="200" placeholder="Contoh: Proyek apa yang paling kamu nantikan?" required>
+      </label>
+      <div id="optionsBox">
+        <label>Pilihan 1 <span class="hint">(maks 80 karakter)</span>
+          <input class="optInput" type="text" maxlength="80" placeholder="Pilihan pertama" required>
+        </label>
+        <label>Pilihan 2 <span class="hint">(maks 80 karakter)</span>
+          <input class="optInput" type="text" maxlength="80" placeholder="Pilihan kedua" required>
+        </label>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <button id="addOptBtn" type="button">+ Tambah pilihan</button>
+        <button id="removeOptBtn" type="button" disabled>− Hapus pilihan</button>
+        <span class="muted">2–4 pilihan</span>
+      </div>
+      <label>Berapa lama polling dibuka?
+        <select id="durationSel">
+          <option value="1">1 hari</option>
+          <option value="3">3 hari</option>
+          <option value="7" selected>7 hari</option>
+          <option value="14">14 hari</option>
+          <option value="30">30 hari</option>
+        </select>
+      </label>
+      <button class="primary" id="createBtn" type="submit" disabled>Buat polling</button>
+      <div class="muted" id="createReason" style="margin-top:8px"></div>
+      <div class="error" id="createError" hidden></div>
+      <div class="ok" id="createOk" hidden></div>
+    </form>
+  </div>
+
+  <h2 style="font-size:1.15rem;margin:24px 0 12px">Polling terbaru</h2>
+  <div id="pollList"><p class="muted">Memuat polling…</p></div>
+
+  <footer>
+    Suara .ai — kontrak pintar tanpa pemilik, tanpa biaya, tanpa token. Yang tercatat di rantai
+    hanyalah pertanyaan, pilihan, dan jumlah suara. Nama <span class="mono">.ai</span> dipakai
+    sebagai identitas pemilih, bukan untuk mencari alamat dompet orang lain.<br>
+    Kontrak: <span class="mono" id="contractAddr">—</span> ·
+    <a id="bscLink" href="#" target="_blank" rel="noopener">Lihat di BscScan</a>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
