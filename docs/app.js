@@ -7,7 +7,7 @@ const CONFIG = {
   RPC_URL: "https://bsc-dataseed.bnbchain.org",
   REGISTRY: "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F",
   // Alamat kontrak SuaraAI setelah di-deploy. Kosong = belum di-deploy.
-  CONTRACT_ADDRESS: "",
+  CONTRACT_ADDRESS: "0x49d980c6716e943A9fEc8537bf4f2175A02Efae0",
   // Alamat CREATE2 yang diprediksi (salt keccak256("suara-ai-v1")).
   PREDICTED_ADDRESS: "0x49d980c6716e943A9fEc8537bf4f2175A02Efae0",
 };
